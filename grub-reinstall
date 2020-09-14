@@ -1,5 +1,18 @@
 #! /usr/bin/env bash
 
+display_config() {
+  echo "required environment variables"
+  echo "EFI_PARTITION: ${EFI_PARTITION}"
+  echo "LINUX_PARTITION: ${LINUX_PARTITION}"
+  echo "LINUX_DRIVE: ${LINUX_DRIVE}"
+
+  [ -z ${EFI_PARTITION} ] && exit 10
+  [ -z ${LINUX_PARTITION} ] && exit 11
+  [ -z ${LINUX_DRIVE} ] && exit 12
+}
+
+display_config
+
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -7,12 +20,8 @@ set -o xtrace
 
 [ `whoami` = root ] && echo must not be run as root && exit 10
 
-echo "EFI partition: ${EFI_PARTITION}"
-echo "linux partition: ${LINUX_PARTITION}"
-echo "drive linux partition is on: ${LINUX_DRIVE}"
-
 mount_point=/grub-reinstall-mountpoint
-system_folders_required='/dev/pts /proc /sys'
+system_folders_required='/dev /dev/pts /proc /sys'
 
 # mount linux partition
 sudo mkdir -p ${mount_point}
