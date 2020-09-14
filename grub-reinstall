@@ -1,0 +1,44 @@
+#! /usr/bin/env bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+set -o xtrace
+
+[ `whoami` = root ] && echo must not be run as root && exit 10
+
+echo "EFI partition: ${EFI_PARTITION}"
+echo "linux partition: ${LINUX_PARTITION}"
+echo "drive linux partition is on: ${LINUX_DRIVE}"
+
+mount_point=/grub-reinstall-mountpoint
+system_folders_required='/dev/pts /proc /sys'
+
+# mount linux partition
+sudo mkdir -p ${mount_point}
+sudo mount -t ext4 ${LINUX_PARTITION} ${mount_point} || true
+
+# mount folders for chroot
+for d in ${system_folders_required}
+do
+  sudo mount --bind $d ${mount_point}${d} || true
+done
+
+# display chroot commands and chroot
+echo "run:"
+echo "mount ${EFI_PARTITION} /boot/efi"
+echo "grub install ${LINUX_DRIVE}"
+echo "grub-install --recheck ${LINUX_DRIVE}"
+echo "update-grub"
+echo "exit"
+
+sudo chroot ${mount_point}
+
+# unmount folders for chroot
+for d in ${system_folders_required}
+do
+  sudo umount ${mount_point}$d || true
+done
+
+# needed because we're monting /dev/pts
+sudo umount ${mount_point}/dev
